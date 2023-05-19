@@ -5,6 +5,9 @@ using System.Windows.Forms;
 using Microsoft.ML;
 using Microsoft.ML.Data;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Drawing;
 
 namespace SentimentalAnalysisModel
 {
@@ -33,6 +36,11 @@ namespace SentimentalAnalysisModel
 
             // Create a prediction engine
             engine = mlContext.Model.CreatePredictionEngine<InputData, OutputData>(model);
+
+
+            // hide chart and table
+            chart1.Visible = false;
+            dataGridView1.Visible = false;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -75,10 +83,14 @@ namespace SentimentalAnalysisModel
             chart1.Series["Reviews"].Points.AddXY("Neutral", averages[2]);
             chart1.Series["Reviews"].Points.AddXY("Not Related", averages[3]);
 
+            chart1.Visible = true;
         }
 
-        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void openToolStripMenuItem_ClickAsync(object sender, EventArgs e)
         {
+            // hide chart
+            chart1.Visible = false;
+
             // Open File Code
             OpenFileDialog openFileDialog = new OpenFileDialog();
 
@@ -99,6 +111,9 @@ namespace SentimentalAnalysisModel
             var messageBox = new MessageBox();
             messageBox.ShowDialog();
 
+            // name and picture of the product
+            string name = "", picUrl = "";
+
             using (TextFieldParser csvParser = new TextFieldParser(path))
             {
                 int num = 1;
@@ -108,16 +123,63 @@ namespace SentimentalAnalysisModel
 
                 // Skip the row with the column names
                 csvParser.ReadLine();
-
+                string[] fields;
+                bool isParsed = false;
                 while (!csvParser.EndOfData)
                 {
                     // Read current line fields, pointer moves to the next line.
-                    string[] fields = csvParser.ReadFields();
-                    dataGridView1.Rows.Add($"{num}.) {fields[0]}");
-                    reviews.Add(fields[0]);
+                    fields = csvParser.ReadFields();
+
+                    // Access the first field (index 0) or other fields as needed
+                    string fieldValue = fields[6];
+
+                    if (!isParsed)
+                    {
+                        name = fields[2];
+                        picUrl = fields[3];
+                        isParsed = true;
+                    }
+                    // Remove the quotes if necessary
+                    if (fieldValue.StartsWith("\"") && fieldValue.EndsWith("\""))
+                    {
+                        fieldValue = fieldValue.Trim('"');
+                    }
+
+                    dataGridView1.Rows.Add($"{num}.) {fieldValue}");
+                    reviews.Add(fieldValue);
                     num++;
                 }
+
             }
+
+            label3.Text = name;
+
+            // download image from url
+            using (HttpClient httpClient = new HttpClient())
+            {
+                try
+                {
+                    // Download the image data as a byte array asynchronously
+                    byte[] imageData = await httpClient.GetByteArrayAsync(picUrl);
+
+                    // Create a MemoryStream from the byte array
+                    using (var stream = new System.IO.MemoryStream(imageData))
+                    {
+                        // Create an Image object from the MemoryStream
+                        Image image = Image.FromStream(stream);
+
+                        // Set the Image object as the image in the PictureBox
+                        pictureBox1.Image = image;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error downloading image: " + ex.Message);
+                }
+            }
+
+
+            dataGridView1.Visible = true;
 
         }
     }
