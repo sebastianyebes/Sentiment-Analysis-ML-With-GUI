@@ -4,9 +4,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using Microsoft.ML;
 using Microsoft.ML.Data;
-using System.Text;
 using System.Linq;
-using System.Diagnostics;
 
 namespace SentimentalAnalysisModel
 {
@@ -30,56 +28,11 @@ namespace SentimentalAnalysisModel
 
             // AI Model
             var mlContext = new MLContext();
-            var modelPath = "C:\\Users\\Administrator\\Desktop\\SentimentAnalysis\\SentimentalAnalysisModel\\SentimentalAnalysisModel\\SentimentModel.zip";
+            var modelPath = "SentimentModel.zip";
             var model = mlContext.Model.Load(modelPath, out var schema);
 
             // Create a prediction engine
             engine = mlContext.Model.CreatePredictionEngine<InputData, OutputData>(model);
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void Open_Click(object sender, EventArgs e)
-        {
-            // Open File Code
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-
-            // To list only csv files, we need to add this filter
-            openFileDialog.Filter = "|*.csv";
-            DialogResult result = openFileDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                path = openFileDialog.FileName;
-            }
-            else
-            {
-                return;
-            }
-
-
-            using (TextFieldParser csvParser = new TextFieldParser(path))
-            {
-                int num = 1;
-                csvParser.CommentTokens = new string[] { "#" };
-                csvParser.SetDelimiters(new string[] { "," });
-                csvParser.HasFieldsEnclosedInQuotes = true;
-
-                // Skip the row with the column names
-                csvParser.ReadLine();
-
-                while (!csvParser.EndOfData)
-                {
-                    // Read current line fields, pointer moves to the next line.
-                    string[] fields = csvParser.ReadFields();
-                    dataGridView1.Rows.Add($"{num}.) {fields[0]}");
-                    reviews.Add(fields[0]);
-                    num++;
-                }
-            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -105,49 +58,67 @@ namespace SentimentalAnalysisModel
         {
             result.Text = "";
             check.Text = "";
-            float positive = 0, negative = 0, neutral = 0, notRelated = 0;
             var total = reviews.Count;
-            var count = 0;
 
-            StringBuilder reviewBuilder = new StringBuilder();
-            foreach (var review in reviews)
+            var progress = new ProgressBar(reviews);
+            progress.ShowDialog();
+            float[] averages = progress.Averages;
+
+            check.Text = $"Positive: {averages[0]} - Negative: {averages[1]} - Neutral: {averages[2]} - Not Related: {averages[3]}";
+            
+            averages = averages.Select(num => num / total).ToArray();
+
+            result.Text = sortHelper.Sort(averages[0], averages[1], averages[2], averages[3]);
+
+            chart1.Series["Reviews"].Points.AddXY("Postive", averages[0]);
+            chart1.Series["Reviews"].Points.AddXY("Negative", averages[1]);
+            chart1.Series["Reviews"].Points.AddXY("Neutral", averages[2]);
+            chart1.Series["Reviews"].Points.AddXY("Not Related", averages[3]);
+
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Open File Code
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+
+            // To list only csv files, we need to add this filter
+            openFileDialog.Filter = "|*.csv";
+            DialogResult result = openFileDialog.ShowDialog();
+
+            if (result == DialogResult.OK)
             {
-                reviewBuilder.Clear();
-                reviewBuilder.Append(review);
+                path = openFileDialog.FileName;
 
-                Debug.WriteLine($"{count++} Reviews Checked");
-                var sampleData = new InputData
-                {
-                    Review = reviewBuilder.ToString()
-                };
-
-                var output = engine.Predict(sampleData);
-
-                switch (output.PredictedLabel)
-                {
-                    case ("Positive"):
-                        positive++;
-                        break;
-                    case ("Negative"):
-                        negative++;
-                        break;
-                    case ("Neutral"):
-                        neutral++;
-                        break;
-                    case ("Not Related"):
-                        notRelated++;
-                        break;
-                }
-                if (count == 100)
-                    break;
+            }
+            else
+            {
+                return;
             }
 
-            float[] averages = { positive, negative, neutral, notRelated };
+            var messageBox = new MessageBox();
+            messageBox.ShowDialog();
 
-            averages = averages.Select(num => num / count).ToArray();
+            using (TextFieldParser csvParser = new TextFieldParser(path))
+            {
+                int num = 1;
+                csvParser.CommentTokens = new string[] { "#" };
+                csvParser.SetDelimiters(new string[] { "," });
+                csvParser.HasFieldsEnclosedInQuotes = true;
 
-            check.Text = $"Positive: {positive} - Negative: {negative} - Neutral: {neutral} - Not Related: {notRelated}";
-            result.Text = sortHelper.Sort(averages[0], averages[1], averages[2], averages[3]);
+                // Skip the row with the column names
+                csvParser.ReadLine();
+
+                while (!csvParser.EndOfData)
+                {
+                    // Read current line fields, pointer moves to the next line.
+                    string[] fields = csvParser.ReadFields();
+                    dataGridView1.Rows.Add($"{num}.) {fields[0]}");
+                    reviews.Add(fields[0]);
+                    num++;
+                }
+            }
+
         }
     }
 
