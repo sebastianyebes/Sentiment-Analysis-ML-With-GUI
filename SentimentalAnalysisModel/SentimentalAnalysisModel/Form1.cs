@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using Microsoft.ML;
 using Microsoft.ML.Data;
-using System.Text;
 using System.Linq;
-using System.Diagnostics;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Drawing;
 
 namespace SentimentalAnalysisModel
 {
@@ -30,56 +31,16 @@ namespace SentimentalAnalysisModel
 
             // AI Model
             var mlContext = new MLContext();
-            var modelPath = "C:\\Users\\Administrator\\Desktop\\SentimentAnalysis\\SentimentalAnalysisModel\\SentimentalAnalysisModel\\SentimentModel.zip";
+            var modelPath = "SentimentModel.zip";
             var model = mlContext.Model.Load(modelPath, out var schema);
 
             // Create a prediction engine
             engine = mlContext.Model.CreatePredictionEngine<InputData, OutputData>(model);
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void Open_Click(object sender, EventArgs e)
-        {
-            // Open File Code
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-
-            // To list only csv files, we need to add this filter
-            openFileDialog.Filter = "|*.csv";
-            DialogResult result = openFileDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                path = openFileDialog.FileName;
-            }
-            else
-            {
-                return;
-            }
 
 
-            using (TextFieldParser csvParser = new TextFieldParser(path))
-            {
-                int num = 1;
-                csvParser.CommentTokens = new string[] { "#" };
-                csvParser.SetDelimiters(new string[] { "," });
-                csvParser.HasFieldsEnclosedInQuotes = true;
-
-                // Skip the row with the column names
-                csvParser.ReadLine();
-
-                while (!csvParser.EndOfData)
-                {
-                    // Read current line fields, pointer moves to the next line.
-                    string[] fields = csvParser.ReadFields();
-                    dataGridView1.Rows.Add($"{num}.) {fields[0]}");
-                    reviews.Add(fields[0]);
-                    num++;
-                }
-            }
+            // hide chart and table
+            chart1.Visible = false;
+            dataGridView1.Visible = false;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -105,49 +66,121 @@ namespace SentimentalAnalysisModel
         {
             result.Text = "";
             check.Text = "";
-            float positive = 0, negative = 0, neutral = 0, notRelated = 0;
             var total = reviews.Count;
-            var count = 0;
 
-            StringBuilder reviewBuilder = new StringBuilder();
-            foreach (var review in reviews)
+            var progress = new ProgressBar(reviews);
+            progress.ShowDialog();
+            float[] averages = progress.Averages;
+
+            check.Text = $"Positive: {averages[0]} - Negative: {averages[1]} - Neutral: {averages[2]} - Not Related: {averages[3]}";
+            
+            averages = averages.Select(num => num / total).ToArray();
+
+            result.Text = sortHelper.Sort(averages[0], averages[1], averages[2], averages[3]);
+
+            chart1.Series["Reviews"].Points.AddXY("Postive", averages[0]);
+            chart1.Series["Reviews"].Points.AddXY("Negative", averages[1]);
+            chart1.Series["Reviews"].Points.AddXY("Neutral", averages[2]);
+            chart1.Series["Reviews"].Points.AddXY("Not Related", averages[3]);
+
+            chart1.Visible = true;
+        }
+
+        private async void openToolStripMenuItem_ClickAsync(object sender, EventArgs e)
+        {
+            // hide chart
+            chart1.Visible = false;
+
+            // Open File Code
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+
+            // To list only csv files, we need to add this filter
+            openFileDialog.Filter = "|*.csv";
+            DialogResult result = openFileDialog.ShowDialog();
+
+            if (result == DialogResult.OK)
             {
-                reviewBuilder.Clear();
-                reviewBuilder.Append(review);
+                path = openFileDialog.FileName;
 
-                Debug.WriteLine($"{count++} Reviews Checked");
-                var sampleData = new InputData
-                {
-                    Review = reviewBuilder.ToString()
-                };
-
-                var output = engine.Predict(sampleData);
-
-                switch (output.PredictedLabel)
-                {
-                    case ("Positive"):
-                        positive++;
-                        break;
-                    case ("Negative"):
-                        negative++;
-                        break;
-                    case ("Neutral"):
-                        neutral++;
-                        break;
-                    case ("Not Related"):
-                        notRelated++;
-                        break;
-                }
-                if (count == 100)
-                    break;
+            }
+            else
+            {
+                return;
             }
 
-            float[] averages = { positive, negative, neutral, notRelated };
+            var messageBox = new MessageBox();
+            messageBox.ShowDialog();
 
-            averages = averages.Select(num => num / count).ToArray();
+            // name and picture of the product
+            string name = "", picUrl = "";
 
-            check.Text = $"Positive: {positive} - Negative: {negative} - Neutral: {neutral} - Not Related: {notRelated}";
-            result.Text = sortHelper.Sort(averages[0], averages[1], averages[2], averages[3]);
+            using (TextFieldParser csvParser = new TextFieldParser(path))
+            {
+                int num = 1;
+                csvParser.CommentTokens = new string[] { "#" };
+                csvParser.SetDelimiters(new string[] { "," });
+                csvParser.HasFieldsEnclosedInQuotes = true;
+
+                // Skip the row with the column names
+                csvParser.ReadLine();
+                string[] fields;
+                bool isParsed = false;
+                while (!csvParser.EndOfData)
+                {
+                    // Read current line fields, pointer moves to the next line.
+                    fields = csvParser.ReadFields();
+
+                    // Access the first field (index 0) or other fields as needed
+                    string fieldValue = fields[6];
+
+                    if (!isParsed)
+                    {
+                        name = fields[2];
+                        picUrl = fields[3];
+                        isParsed = true;
+                    }
+                    // Remove the quotes if necessary
+                    if (fieldValue.StartsWith("\"") && fieldValue.EndsWith("\""))
+                    {
+                        fieldValue = fieldValue.Trim('"');
+                    }
+
+                    dataGridView1.Rows.Add($"{num}.) {fieldValue}");
+                    reviews.Add(fieldValue);
+                    num++;
+                }
+
+            }
+
+            label3.Text = name;
+
+            // download image from url
+            using (HttpClient httpClient = new HttpClient())
+            {
+                try
+                {
+                    // Download the image data as a byte array asynchronously
+                    byte[] imageData = await httpClient.GetByteArrayAsync(picUrl);
+
+                    // Create a MemoryStream from the byte array
+                    using (var stream = new System.IO.MemoryStream(imageData))
+                    {
+                        // Create an Image object from the MemoryStream
+                        Image image = Image.FromStream(stream);
+
+                        // Set the Image object as the image in the PictureBox
+                        pictureBox1.Image = image;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error downloading image: " + ex.Message);
+                }
+            }
+
+
+            dataGridView1.Visible = true;
+
         }
     }
 
