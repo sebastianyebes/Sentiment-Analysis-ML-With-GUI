@@ -37,10 +37,7 @@ namespace SentimentalAnalysisModel
             // Create a prediction engine
             engine = mlContext.Model.CreatePredictionEngine<InputData, OutputData>(model);
 
-
-            // hide chart and table
-            chart1.Visible = false;
-            dataGridView1.Visible = false;
+            button2.Enabled= false;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -82,14 +79,10 @@ namespace SentimentalAnalysisModel
             chart1.Series["Reviews"].Points.AddXY("Negative", averages[1]);
             chart1.Series["Reviews"].Points.AddXY("Neutral", averages[2]);
             chart1.Series["Reviews"].Points.AddXY("Not Related", averages[3]);
-
-            chart1.Visible = true;
         }
 
         private async void openToolStripMenuItem_ClickAsync(object sender, EventArgs e)
         {
-            // hide chart
-            chart1.Visible = false;
 
             // Open File Code
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -101,6 +94,7 @@ namespace SentimentalAnalysisModel
             if (result == DialogResult.OK)
             {
                 path = openFileDialog.FileName;
+                button2.Enabled = true;
 
             }
             else
@@ -180,7 +174,30 @@ namespace SentimentalAnalysisModel
 
 
             dataGridView1.Visible = true;
+        }
 
+        private void clearButton_Click(object sender, EventArgs e)
+        {
+            // Clear the chart
+            chart1.Series["Reviews"].Points.Clear();
+
+            // Clear the data grid
+            dataGridView1.Rows.Clear();
+
+            // Clear the picture box
+            pictureBox1.Image = null;
+
+            // Clear the label
+            label3.Text = null;
+
+            // Clear the reviews list
+            reviews.Clear();
+
+            // Clear the result and check labels
+            result.Text = null;
+            check.Text = null;
+
+            button2.Enabled = false;
         }
     }
 
