@@ -6,8 +6,12 @@ using Microsoft.ML;
 using Microsoft.ML.Data;
 using System.Linq;
 using System.Net.Http;
-using System.Threading.Tasks;
 using System.Drawing;
+using System.Net;
+using HtmlAgilityPack;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using System.IO;
 
 namespace SentimentalAnalysisModel
 {
@@ -18,6 +22,9 @@ namespace SentimentalAnalysisModel
         List<string> reviews = new List<string>();
         private PredictionEngine<InputData, OutputData> engine;
         SortHelper sortHelper = new SortHelper();
+        private string baseUrl;
+        private int currentPage;
+        int num = 0;
 
         public Form1()
         {
@@ -198,6 +205,161 @@ namespace SentimentalAnalysisModel
             check.Text = null;
 
             button2.Enabled = false;
+
+            urlTextBox.Text = null;
+            num = 0;
+        }
+
+        private void scrapeButton_Click(object sender, EventArgs e)
+        {
+            string url = urlTextBox.Text;
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                try
+                {
+                    baseUrl = url;
+                    currentPage = 1;
+
+                    ScrapeReviews();
+                }
+                catch (Exception ex)
+                {
+                    // Handle any exceptions that may occur during the scraping process
+                    Debug.WriteLine("An error occurred: " + ex.Message);
+                }
+            }
+            else
+            {
+                Debug.WriteLine("Please enter a valid URL.");
+            }
+        }
+        private void ScrapeReviews()
+        {
+            try
+            {
+                // Create the URL for the current page
+                string url = $"{baseUrl}?pageNumber={currentPage}";
+
+                // Create a WebClient to download the HTML content of the page
+                WebClient client = new WebClient();
+                string html = client.DownloadString(url);
+
+                // Use HtmlAgilityPack to parse the HTML
+                HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
+                doc.LoadHtml(html);
+
+                if(num == 0)
+                {
+                    // Find the product image container on the page
+                    HtmlNode productImageContainer = doc.DocumentNode.SelectSingleNode("//a[@class='a-link-normal']//img[@data-hook='cr-product-image']");
+                    if (productImageContainer != null)
+                    {
+                        // Get the source URL of the image
+                        string imageUrl = WebUtility.HtmlDecode(productImageContainer.GetAttributeValue("src", ""));
+
+                        // Download the image using WebClient
+                        WebClient imageClient = new WebClient();
+                        byte[] imageData = imageClient.DownloadData(imageUrl);
+
+                        // Create a MemoryStream from the image data
+                        MemoryStream imageStream = new MemoryStream(imageData);
+
+                        // Set the image in the PictureBox
+                        pictureBox1.Image = Image.FromStream(imageStream);
+                    }
+
+                    // Find the product name container on the page
+                    HtmlNode productNameContainer = doc.DocumentNode.SelectSingleNode("//a[@data-hook='product-link']");
+                    if (productNameContainer != null)
+                    {
+                        // Get the product name
+                        string productName = productNameContainer.InnerText.Trim();
+
+                        // Use the product name as needed
+                        label3.Text = productName;
+                    }
+                }     
+
+                // Find the review containers on the page (adjust the XPath to match the specific structure of Amazon's page)
+                HtmlNode reviewContainer = doc.DocumentNode.SelectSingleNode("//div[@id='cm_cr-review_list']");
+
+                if (reviewContainer != null)
+                {
+                    // Find all the comment nodes within the review container
+                    HtmlNodeCollection commentNodes = reviewContainer.SelectNodes(".//div[@class='a-row a-spacing-small review-data']//span[@data-hook='review-body']");
+                    button2.Enabled = true;
+
+                    if (commentNodes != null)
+                    {
+
+                        // Extract the comment text from each node
+                        foreach (HtmlNode commentNode in commentNodes)
+                        {
+                            //extractedData += commentNode.InnerText.Trim() + Environment.NewLine + Environment.NewLine;
+                            if (!commentNode.InnerText.Contains("The media could not be loaded."))
+                            {
+                                string commentText = commentNode.InnerText.Trim();
+                                commentText = FilterNonTextCharacters(commentText);
+                                dataGridView1.Rows.Add($"{num + 1}.) {commentText}");
+                                reviews.Add(commentText);
+                                Debug.WriteLine(commentText + "\n");
+                                num++;
+
+                                int limit = 0;
+                                Int32.TryParse(dataCount.Text, out limit);
+                                if (num == limit)
+                                    return;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.WriteLine("No comments found on the page.");
+                    }
+                    // Check if there is a next page
+                    HtmlNode nextPageListItem = doc.DocumentNode.SelectSingleNode("//li[@class='a-last']");
+                    if (nextPageListItem != null)
+                    {
+                        HtmlNode nextPageLink = nextPageListItem.SelectSingleNode(".//a");
+                        Debug.WriteLine("Next page: ");
+                        if (nextPageLink != null)
+                        {
+                            // Get the URL of the next page
+                            string nextPageUrl = WebUtility.HtmlDecode(nextPageLink.GetAttributeValue("href", ""));
+
+                            // Remove any query parameters from the URL
+                            nextPageUrl = nextPageUrl.Split('?')[0];
+
+                            // Create the complete URL for the next page
+                            nextPageUrl = new Uri(new Uri(baseUrl), nextPageUrl).ToString();
+
+                            // Scrape the next page
+                            currentPage++;
+                            baseUrl = nextPageUrl;
+                            ScrapeReviews();
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("No review container found on the page.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions that may occur during the scraping process
+                Debug.WriteLine("An error occurred: " + ex.Message);
+            }
+        }
+        private string FilterNonTextCharacters(string text)
+        {
+            // Use a regular expression to filter out non-alphabetic letters and digits
+            return Regex.Replace(text, @"[^a-zA-Z0-9!&'?.,%+:=]+", " ");
+        }
+
+        private void check_Click(object sender, EventArgs e)
+        {
+
         }
     }
 

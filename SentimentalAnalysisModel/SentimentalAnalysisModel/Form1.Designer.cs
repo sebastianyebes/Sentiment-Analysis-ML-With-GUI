@@ -48,6 +48,11 @@
             this.label3 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.clearButton = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
+            this.urlTextBox = new System.Windows.Forms.TextBox();
+            this.scrapeButton = new System.Windows.Forms.Button();
+            this.label5 = new System.Windows.Forms.Label();
+            this.dataCount = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chart1)).BeginInit();
             this.menuStrip1.SuspendLayout();
@@ -99,7 +104,7 @@
             this.dataGridView1.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.Disable;
             this.dataGridView1.ColumnHeadersHeight = 29;
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            this.dataGridView1.Location = new System.Drawing.Point(51, 501);
+            this.dataGridView1.Location = new System.Drawing.Point(52, 538);
             this.dataGridView1.MultiSelect = false;
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.ReadOnly = true;
@@ -119,11 +124,11 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(51, 83);
+            this.button2.Location = new System.Drawing.Point(51, 128);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.Size = new System.Drawing.Size(99, 23);
             this.button2.TabIndex = 7;
-            this.button2.Text = "Predict File";
+            this.button2.Text = "Predict Reviews";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
@@ -140,10 +145,11 @@
             // check
             // 
             this.check.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.check.Location = new System.Drawing.Point(222, 88);
+            this.check.Location = new System.Drawing.Point(439, 128);
             this.check.Name = "check";
-            this.check.Size = new System.Drawing.Size(260, 14);
+            this.check.Size = new System.Drawing.Size(308, 14);
             this.check.TabIndex = 9;
+            this.check.Click += new System.EventHandler(this.check_Click);
             // 
             // chart1
             // 
@@ -162,7 +168,7 @@
             legend3.TableStyle = System.Windows.Forms.DataVisualization.Charting.LegendTableStyle.Wide;
             legend3.TitleBackColor = System.Drawing.Color.White;
             this.chart1.Legends.Add(legend3);
-            this.chart1.Location = new System.Drawing.Point(404, 128);
+            this.chart1.Location = new System.Drawing.Point(405, 165);
             this.chart1.Margin = new System.Windows.Forms.Padding(2);
             this.chart1.Name = "chart1";
             series3.BackImageAlignment = System.Windows.Forms.DataVisualization.Charting.ChartImageAlignmentStyle.Center;
@@ -217,7 +223,7 @@
             // label3
             // 
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(50, 436);
+            this.label3.Location = new System.Drawing.Point(49, 466);
             this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(318, 59);
@@ -226,7 +232,7 @@
             // pictureBox1
             // 
             this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pictureBox1.Location = new System.Drawing.Point(51, 128);
+            this.pictureBox1.Location = new System.Drawing.Point(52, 165);
             this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(315, 299);
@@ -237,7 +243,7 @@
             // 
             // clearButton
             // 
-            this.clearButton.Location = new System.Drawing.Point(141, 83);
+            this.clearButton.Location = new System.Drawing.Point(156, 128);
             this.clearButton.Name = "clearButton";
             this.clearButton.Size = new System.Drawing.Size(75, 23);
             this.clearButton.TabIndex = 15;
@@ -245,11 +251,62 @@
             this.clearButton.UseVisualStyleBackColor = true;
             this.clearButton.Click += new System.EventHandler(this.clearButton_Click);
             // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label4.Location = new System.Drawing.Point(38, 60);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(35, 15);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "URL:";
+            // 
+            // urlTextBox
+            // 
+            this.urlTextBox.Location = new System.Drawing.Point(79, 60);
+            this.urlTextBox.Name = "urlTextBox";
+            this.urlTextBox.Size = new System.Drawing.Size(242, 20);
+            this.urlTextBox.TabIndex = 17;
+            // 
+            // scrapeButton
+            // 
+            this.scrapeButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.scrapeButton.Location = new System.Drawing.Point(337, 60);
+            this.scrapeButton.Name = "scrapeButton";
+            this.scrapeButton.Size = new System.Drawing.Size(75, 23);
+            this.scrapeButton.TabIndex = 18;
+            this.scrapeButton.Text = "Scrape";
+            this.scrapeButton.UseVisualStyleBackColor = true;
+            this.scrapeButton.Click += new System.EventHandler(this.scrapeButton_Click);
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label5.Location = new System.Drawing.Point(183, 86);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(71, 15);
+            this.label5.TabIndex = 19;
+            this.label5.Text = "No. of Data:";
+            // 
+            // dataCount
+            // 
+            this.dataCount.Location = new System.Drawing.Point(260, 85);
+            this.dataCount.Name = "dataCount";
+            this.dataCount.Size = new System.Drawing.Size(61, 20);
+            this.dataCount.TabIndex = 20;
+            this.dataCount.Text = "50";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(810, 736);
+            this.ClientSize = new System.Drawing.Size(810, 813);
+            this.Controls.Add(this.dataCount);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.scrapeButton);
+            this.Controls.Add(this.urlTextBox);
+            this.Controls.Add(this.label4);
             this.Controls.Add(this.clearButton);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.label3);
@@ -301,6 +358,11 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Button clearButton;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.TextBox urlTextBox;
+        private System.Windows.Forms.Button scrapeButton;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.TextBox dataCount;
     }
 }
 
